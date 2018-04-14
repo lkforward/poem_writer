@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Utility functions for the generative model for Shakespeare's poeam. 
-
 Created on Thu Mar 15 13:21:18 2018
 
 @author: kliu14
@@ -36,6 +35,43 @@ def load_poems(filename):
             
         sonnets.append(sonnet)
         
+    return sonnets
+    
+    
+def load_poems_char_level(fname):
+    """
+    [INPUTS]:
+    fname: string. 
+        The file name for the text data. 
+        
+    [OUTPUTS]:
+    poems: list. 
+        The list of characters in the text file. 
+    """
+            
+    # Open the file and read it line by line:
+    #   if it is not a blank line:
+    #       Read the text char by char (include the punctuation and line break);
+    #   else:
+    #       skip. 
+    
+    sonnets = []
+    
+    with open(fname, 'r') as fid: 
+        sonnet = ''
+        do_append = False
+        
+        for line in fid:
+            if line.strip().split(' ')[-1].isdigit():
+                do_append = True
+            elif line == '\n':
+                if do_append: 
+                    sonnets.append(sonnet)
+                    sonnet = ''
+                    do_append = False
+            else:
+                sonnet += line.strip(' ')
+    
     return sonnets
 
 
@@ -128,4 +164,6 @@ def test_generating_emissions():
 
 
 if __name__ == "__main__":
-    test_generating_emissions()
+    # test_generating_emissions()
+    fname = r"data\shakespeare.txt"
+    sonnets = load_poems_char_level(fname)
