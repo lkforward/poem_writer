@@ -17,25 +17,67 @@ from keras.optimizers import RMSprop
 
 import sys
 
-from utils import load_poems
+from utils import load_poems, load_poems_char_level
 
 
-def char_seq(fname):
-    # Read the sonnets into a sequence of characters. 
+#def char_seq(fname):
+#    # Read the sonnets into a sequence of characters. 
+#
+#    sonnets = load_poems(fname)
+#    char_list = []
+#    for sonnet in sonnets:
+#        for sentence in sonnet:
+#            char_list += sentence
+#            
+#    return char_list
 
-    sonnets = load_poems(fname)
-    char_list = []
-    for sonnet in sonnets:
-        for sentence in sonnet:
-            char_list += sentence
-            
-    return char_list
-
+#def char_vocab(char_seq):
+#    # Build the character-level vocabulary from the file. 
+#        
+#    return sorted(list(set(char_seq)))
 
 def char_vocab(char_seq):
-    # Build the character-level vocabulary from the file. 
+    """
+    [Inputs]:
+    char_seq: a list of string. 
+        Each string is a sonnet with \n.
         
-    return sorted(list(set(char_seq)))
+    [Outputs]:
+    vocab: a sorted list of all the characters. 
+    """
+    vocab = set() 
+    
+    for sonnet in char_seq:
+        sonnet_in_char = list(sonnet)
+        vocab = vocab.union(sonnet_in_char)
+       
+    return sorted(list(vocab))
+    
+    
+def seq_with_next_char(str_list, seq_length):
+    """
+    Make the string list into (sequence, next_char) pair for training. 
+    
+    [INPUTS]:
+    str_list: a list.
+        Each element is a string (a sonnet for the poems) from the data file.
+    seq_length: integer. 
+        The length of the resultant sequence. 
+    [OUTPUTS]:
+    seqs: a list.
+        Each element is string with the fixed length "seq_length". 
+    next_char: a list. 
+        The next char for the corresponding string. 
+    """
+    seqs = []
+    next_char = []
+    
+    for sonnet in str_list:
+        for i in range(len(sonnet)-seq_length):
+            seqs.append(sonnet[i : i + seq_length])
+            next_char.append(sonnet[i + seq_length])
+            
+    return seqs, next_char
 
  
 def preprocess_text(fname, seq_length):
@@ -47,9 +89,8 @@ def preprocess_text(fname, seq_length):
     """
     # Get the sonnets as a sequence of chars. 
     # Note: we need to keep \n or other important chars.     
+    sonnets_in_char = load_poems_char_level(fname)
     
-    sonnets_in_char = char_seq(fname)
-    print(sonnets_in_char[:30])
     
     chars = char_vocab(sonnets_in_char)
     print(chars[:5])    
@@ -58,32 +99,20 @@ def preprocess_text(fname, seq_length):
     
     # Make sonnets into input data of specified shape
     # a. Make sequences of chars into the format of X, y
-    seqs = [] 
-    next_char = [] 
-    for i in range(len(sonnets_in_char) - seq_length):
-        seqs.append(sonnets_in_char[i:i+seq_length])
-        next_char.append(sonnets_in_char[i+seq_length])
+    seqs, next_char = seq_with_next_char(sonnets_in_char, seq_length)
     
     # b. Convert the chars into numbers: 
     train_x = np.zeros((len(seqs), seq_length, len(chars)))
     train_y = np.zeros((len(seqs), len(chars)))
     
+    # One-hot encodding: 
     for i, sentence in enumerate(seqs):
         for j, single_char in enumerate(sentence):
             train_x[i, j, char_to_indices[single_char]] = 1
         train_y[i, char_to_indices[next_char[i]]] = 1
     
     return train_x, train_y, indices_to_char
-    
-    
-def test_preprocess():
-    fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\data\shakespeare.txt"
-    train_x, train_y, _ = preprocess_text(fname, 7)
-    
-    print("The first training sequence: ", train_x[0, :, :])
-    print("The first training label:", train_y[0, :])
-    
-    return None    
+  
     
     
 def sampling(preds, temperature):
@@ -161,43 +190,69 @@ def check_rnn_parameters():
     # layer 3: 0
     # Note: layer 1 only output the last y, which is a 100x1 vector. 
     model.summary()
-
-
-def training_data(): 
-    pass
+    
+    
+def test_char_vocab():
+    char_seq = ['hello, this is me', 'who is that?']
+    
+    print("")
+    print("The list of string:")
+    print(char_seq)
+    
+    vocab = char_vocab(char_seq)
+    print("The vocabulary:")
+    print(vocab)
+    
+    
+def test_seq_with_next_char():
+    str_list = ["Hello, this is Jim Green.", "What's up, body?"]
+    print("")
+    print("The string list is:", str_list)
+    seq_length = 4
+    
+    seqs, next_char = seq_with_next_char(str_list, seq_length)
+    
+    print("The 1st sequence:", seqs[0])
+    print("The next char:", next_char[0])
+    
+    
+def test_preprocess():
+    fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\data\shakespeare.txt"
+    train_x, train_y, _ = preprocess_text(fname, 7)
+    
+    print("The first training sequence: ", train_x[0, :, :])
+    print("The first training label:", train_y[0, :])
+    
+    return None  
 
 
 if __name__ == "__main__":
     # check_rnn_parameters()
     # test_preprocess()
+    # test_char_vocab()
+    # test_seq_with_next_char()
+
 
     # ======================================================
     # Function 1
     # ======================================================
-    fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\data\shakespeare.txt"
+    fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\data\shakespeare.txt"    
+    seq_length = 10
     
-    seq_length = 40
-    
-    sonnets_in_char = char_seq(fname)
-    print(sonnets_in_char[:30])
-    
+    sonnets_in_char = load_poems_char_level(fname)
+        
     chars = char_vocab(sonnets_in_char)
     print(chars[:5])    
     char_to_indices = dict((char,i) for i, char in enumerate(chars))
     indices_to_char = dict((i, char) for i, char in enumerate(chars))
     
-    # Make sonnets into input data of specified shape
-    # a. Make sequences of chars into the format of X, y
-    seqs = [] 
-    next_char = [] 
-    for i in range(len(sonnets_in_char) - seq_length):
-        seqs.append(sonnets_in_char[i:i+seq_length])
-        next_char.append(sonnets_in_char[i+seq_length])
+    seqs, next_char = seq_with_next_char(sonnets_in_char, seq_length)
     
     # b. Convert the chars into numbers: 
     train_x = np.zeros((len(seqs), seq_length, len(chars)))
     train_y = np.zeros((len(seqs), len(chars)))
     
+    # One-hot encodding: 
     for i, sentence in enumerate(seqs):
         for j, single_char in enumerate(sentence):
             train_x[i, j, char_to_indices[single_char]] = 1
