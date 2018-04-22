@@ -72,7 +72,6 @@ def on_epoch_end(epoch, logs):
     # Here we start from a random position between 0 and 100.
     # start_index = np.random.randint(0, 100)
     start_index = 0
-    num_words_to_generate = 400
     
     # Get a sequence to start with:
     print("seq length =", seq_length)
@@ -101,59 +100,37 @@ def on_epoch_end(epoch, logs):
         sys.stdout.flush()
 
     print()    
-    if epoch == 2:
+    if epoch == epochs-1:
         fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\generated.txt"
         write_str_into_file(fname, generated)
         
 
- 
-class rnn_writer():
-    def __init__(self, fname, seq_length):
-        self.text_fname = fname
-        self.seq_length = seq_length
-        
-        
-        
-    def fit_generate(self, num_units=100, batch_size=128, epochs=60):
-        
-        self.train_x, self.train_y, self.indices_to_char = preprocess_text(self.fname, self.seq_length)
-        self.chars = list(indices_to_char.values())
-        
-        self.num_units = num_units
-        self.model = build_rnn(self.num_units, self.seq_length, len(self.chars))
-        
-        optimizer = RMSprop(lr=0.01)
-        self.model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-        
-        print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
-        self.model.fit(self.train_x, self.train_y, batch_size=batch_size, 
-                       epochs=epochs, callbacks=[print_callback])
-        
-        
-            
-        
-# if __name__ == "__main__":
-# ======================================================
-# Function 1
-# ======================================================
-fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\data\shakespeare.txt"    
-seq_length = 10
+if __name__ == "__main__":
+    # ======================================================
+    # Step 1. Preprocess text file into training data
+    # ======================================================
+    fname = r"E:\Coursera\CS155\LiuKe_hw_submission\prj3_code\data\shakespeare.txt"    
+    seq_length = 10
 
-sonnets_in_char = load_poems_char_level(fname)  
-
-train_x, train_y, char_to_indices, indices_to_char = preprocess_text(fname, seq_length)
-chars = list(indices_to_char.values())
+    # For different text-preprocessing scheme, we need other functions to 
+    # replace load_poems_char_level() and preprocess_text()    
+    sonnets_in_char = load_poems_char_level(fname)    
+    train_x, train_y, char_to_indices, indices_to_char = preprocess_text(fname, seq_length)
+    chars = list(indices_to_char.values())
+        
     
-
-# ======================================================
-# Function 2: Train RNN
-# ====================================================== 
-num_unit = 100
-input_dim = len(chars)   
-model = build_rnn(num_unit, seq_length, input_dim) 
-
-optimizer = RMSprop(lr=0.01)
-model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-
-print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
-model.fit(train_x, train_y, batch_size=128, epochs=3, callbacks=[print_callback])
+    # ======================================================
+    # Step 2: Train RNN and generate new texts
+    # ====================================================== 
+    num_unit = 100
+    input_dim = len(chars)   
+    model = build_rnn(num_unit, seq_length, input_dim) 
+    
+    optimizer = RMSprop(lr=0.01)
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+    
+    num_words_to_generate = 400
+    batch_size=128
+    epochs=2
+    print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
+    model.fit(train_x, train_y, batch_size, epochs, callbacks=[print_callback])

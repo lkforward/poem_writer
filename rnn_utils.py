@@ -61,6 +61,7 @@ def load_poems_char_level(fname):
 #        
 #    return sorted(list(set(char_seq)))
 
+
 def char_vocab(char_seq):
     """
     [Inputs]:
@@ -170,7 +171,8 @@ def test_preprocess():
     print("The first training sequence: ", train_x[0, :, :])
     print("The first training label:", train_y[0, :])
     
-    return None 
+    return None
+    
     
     
 if __name__ == "__main__":
